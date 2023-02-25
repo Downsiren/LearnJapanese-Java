@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    username: root
+    password: zw123456
+    url: jdbc:mysql://localhost:3306/japanese?useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  type-aliases-package: ink.zxu.learn_japanese.utils
+  mapper-locations: classpath:mybatis/*.xml
+
+
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="communicationMapper">
+
+    <select id="showContent" parameterType="PageData" resultType="PageData">
+
+     select nick_name,avatar_url,id,content,images,date_format(add_time,"%Y-%m-%d %T") as addtime
+     from j_content a join users b on a.openid=b.openid  order by addtime desc
+    </select>
+
+
+    <select id="completeComment" parameterType="PageData" resultType="PageData">
+     select nick_name as nick_name2 ,avatar_url as avatar_url2
+     from (select * from tb_comment where plid=#{hfid})as a left join users b on a.openid=b.openid
+    </select>
+
+    <select id="showReply" parameterType="PageData" resultType="PageData">
+     select nick_name,avatar_url,dtid,plid,hfid,a.openid,content,zan_num,comment_num,date_format(addtime,"%Y-%m-%d %T") as addtime
+     from (select * from tb_comment where dtid=#{plid})as a left join users b on a.openid=b.openid
+    </select>
+
+    <select id="showImage" parameterType="PageData" resultType="java.lang.String">
+     select url from tb_image where content_id=#{id}
+    </select>
+
+    <insert id="addContent" parameterType="PageData">
+     insert into j_content(id,openid,content,images)
+     values (#{id},#{openid},#{content},#{images})
+    </insert>
+
+
+    <insert id="addComment" parameterType="PageData">
+     insert into j_comment(comment_id,dt_id,content,user_id)
+     values (#{comment_id},#{dt_id},#{content},#{user_id})
+    </insert>
+
+    <!--查询当前动态点赞数-->
+    <select id="queryZanNum" parameterType="PageData" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM
+        	j_zan
+        WHERE
+        	item_id = #{item_id}
+        	and status='1'
+    </select>
+
+    <!--查询当前动态回复量-->
+    <select id="queryCommentNumByDtId" parameterType="PageData" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM
+        	j_comment
+        WHERE
+        	dt_id = #{dt_id}
+    </select>
+
+    <!--我是否对当前动态点赞-->
+    <select id="queryIsZan" parameterType="PageData" resultType="PageData">
+        select * from j_zan where item_id=#{item_id} and user_id=#{user_id}
+        <if test="status!=null and status !=''">
+            and status = #{status}
+        </if>
+    </select>
+
+    <!--查询评论-->
+    <select id="queryComment" parameterType="PageData" resultType="PageData">
+        SELECT
+        	a.comment_id,
+        	a.dt_id,
+        	a.content,
+            date_format(a.add_time,"%Y-%m-%d %T") as add_time,
+        	b.openid,
+        	b.nick_name,
+        	b.avatar_url
+        FROM
+        	j_comment a
+        LEFT JOIN users b ON a.user_id = openid
+        WHERE
+        	dt_id = #{dt_id}
+        order by a.add_time desc
+    </select>
+
+    <!--回复数量-->
+    <select id="queryReplyNum" parameterType="PageData" resultType="java.lang.Integer">
+            SELECT count(1)
+        FROM
+        	j_reply
+        WHERE
+        	comment_id = #{comment_id}
+   </select>
+
+    <!--回复列表-->
+    <select id="queryReply" parameterType="PageData" resultType="PageData">
+        SELECT
+        	c.*, d.nick_name AS b_nick_name,
+        	d.avatar_url AS b_avatar_url
+        FROM
+        	(
+        		SELECT
+        		a.reply_id,
+			    a.comment_id,
+			    a.toreply_id,
+			    a.reply_type,
+			    a.content,
+			    a.from_userid,
+			    a.to_userid,
+			    date_format(a.add_time, "%Y-%m-%d %T") AS add_time,
+			    b.nick_name AS a_nick_name,
+			    b.avatar_url AS a_avatar_url
+        		FROM
+        			j_reply a
+        		LEFT JOIN users b ON a.from_userid = b.openid
+        		where comment_id=#{comment_id}
+        	    order by a.add_time desc
+        	) AS c
+        LEFT JOIN users d ON c.to_userid = d.openid
+    </select>
+
+    <!--点赞-->
+    <insert id="addZan" parameterType="PageData">
+        insert into j_zan(item_id,type,user_id)
+        values  (#{item_id},#{type},#{user_id})
+    </insert>
+
+    <!--更新点赞-->
+    <update id="updateZan" parameterType="PageData">
+        UPDATE j_zan
+        SET status = #{status}
+        WHERE
+        	item_id = #{item_id}
+        AND user_id = #{user_id}
+    </update>
+
+    <!--查询评论是否在-->
+    <select id="queryCommentNumById" parameterType="PageData" resultType="java.lang.Integer">
+        SELECT count(1) as count
+        FROM
+        	j_comment
+        WHERE
+        	comment_id = #{comment_id}
+    </select>
+
+    <!--添加回复-->
+    <insert id="addReply" parameterType="PageData">
+        insert into j_reply(reply_id,comment_id,toreply_id,reply_type,content,from_userid,to_userid)
+        values  (#{reply_id},#{comment_id},#{toreply_id},#{reply_type},#{content},#{from_userid},#{to_userid})
+    </insert>
+
+    <delete id="deleteContent" parameterType="PageData">
+      delete from j_content where id=#{item_id}
+    </delete>
+
+    <delete id="deleteComment" parameterType="PageData">
+      delete from j_comment where dt_id=#{item_id}
+    </delete>
+
+    <delete id="deleteReply" parameterType="PageData">
+      delete from j_reply where comment_id in (select comment_id  as id from j_content a join j_comment b on a.id=b.dt_id   where a.id=#{item_id})
+    </delete>
+
+
+</mapper>

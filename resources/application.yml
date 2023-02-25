@@ -1,0 +1,51 @@
+spring:
+  profiles:
+    active: db
+  mvc:
+    view:
+      prefix: /WEB-INF/pages/
+      suffix: .jsp
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 10MB
+
+
+
+server:
+  port: 443
+  ssl:
+    key-store: classpath:3036676_zxu.ink.pfx
+    key-store-password: JjWt9Qbu
+    key-store-type: PKCS12
+#    key-alias: alias
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    context-path: /learn
+    jsp:
+      init-parameters:
+        development: true
+
+
+upload:
+  serverPrefix: https://localhost/learn
+
+#  serverPrefix: https://zxu.ink/learn
+  image_path:  #配置图片保存位置
+    windows: C:/springboot-upload/image/
+    linux: /dreamhai/springboot-upload/image/
+  c_image_path:  #配置课程图片保存位置
+      windows: C:/springboot-upload/c_image/
+      linux: /dreamhai/springboot-upload/c_image/
+  course_path:  #配置课程保存位置
+    windows: C:/springboot-upload/course/
+    linux: /dreamhai/springboot-upload/course/
+  video_path:  #配置视频保存位置
+    windows: C:/springboot-upload/video/
+    linux: /dreamhai/springboot-upload/video/
+  voice_path:  #配置音频保存位置
+    windows: C:/springboot-upload/voice/
+    linux: /dreamhai/springboot-upload/voice/
+  maxFileSize: 10240KB #单个文件最大KB/MB
+  maxRequestSize: 102400KB   #设置总上传数据总大小

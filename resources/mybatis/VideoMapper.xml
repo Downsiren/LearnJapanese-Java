@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="videoMapper">
+
+
+
+<!--    展示所有视频通过course_id-->
+    <select id="showByCourse_id" parameterType="java.lang.String" resultType="java.util.Map">
+     select id,video_url,video_name,date_format(add_time,"%Y-%m-%d %T") as add_time,browse_num,video_num,state from tb_video where course_id=#{course_id} and state=0
+     order by video_num asc
+    </select>
+    
+    <!--查询系列是否存在-->
+    <select id="queryCourseType" parameterType="PageData" resultType="PageData">
+       select type,count(1) count ,date_format(add_time,"%Y-%m-%d %T") as add_time from v_course group  by type order by add_time asc
+    </select>
+
+    <!--课程分页查询-->
+    <select id="queryCourseListPage" parameterType="PageData" resultType="PageData">
+        select  course_id,
+        course_name,
+        type,
+        introduce,
+        state,
+        date_format(add_time,"%Y-%m-%d %T") as add_time,
+        image_url
+        from v_course where state=0
+        <if test="course_id!=null and course_id !=''">
+            and course_id = #{course_id}
+        </if>
+        <if test="type!=null and type !=''">
+            and type = #{type}
+        </if>
+        <if test="course_name!=null and course_name !=''">
+            and course_name like concat('%', #{course_name},'%')
+        </if>
+    </select>
+
+
+    <!--课程总数-->
+    <select id="queryCourseCount" parameterType="PageData" resultType="PageData">
+        select  count(*) as count from v_course where state=0
+        <if test="course_id!=null and course_id !=''">
+            and course_id = #{course_id}
+        </if>
+        <if test="type!=null and type !=''">
+            and type = #{type}
+        </if>
+        <if test="course_name!=null and course_name !=''">
+            and course_name like concat('%', #{course_name},'%')
+        </if>
+    </select>
+
+    <!--增加课程-->
+    <insert id="addCourse" parameterType="PageData" >
+        insert into v_course(course_id,course_name,type,introduce,image_url)
+        values  (#{course_id},#{course_name},#{type},#{introduce},#{image_url})
+    </insert>
+
+
+    <!--删除课程-->
+    <update id="deleteCourse" parameterType="PageData" >
+        update  v_course set state=1 where course_id=#{course_id}
+    </update>
+    
+    <!--统计某个视频的评论数-->
+    <select id="showCommentNum" parameterType="java.lang.String" resultType="PageData">
+    select COUNT(id) as commentnum from tb_videocomment  where videoid=#{id}
+    </select>
+
+<!--    更新浏览数-->
+    <update id="updateVideoBrowseNum"  parameterType="PageData" >
+       UPDATE tb_video SET browse_num = browse_num+1 WHERE  id=#{videoid}
+    </update>
+
+    <!--后台:添加视频 -->
+    <insert id="addVideo" parameterType="PageData" >
+     insert into tb_video(id,video_url,video_name,video_knowledge,add_time,browse_num,course_id,video_num,state)
+     values (#{id},#{video_url},#{video_name},#{video_knowledge},STR_TO_DATE(#{add_time},"%Y-%m-%d %T"),0,#{course_id},#{video_num},#{state})
+    </insert>
+
+    <!--微课视频分页查询-->
+    <select id="queryVideoInfoListPage" parameterType="pageData" resultType="PageData">
+        select id,video_url, video_knowledge,video_name, date_format(add_time,"%Y-%m-%d %T") as add_time, browse_num,video_num,state
+        from tb_video
+        where 1=1
+        <if test="video_name!=null and video_name !=''">
+            and video_name like concat('%', #{video_name},'%')
+        </if>
+        <if test="state!=null and state !=''">
+            and state=#{state}
+        </if>
+        and course_id = #{course_id}
+        order by add_time desc
+    </select>
+
+    <!--视频总数-->
+    <select id="queryVideoCount" parameterType="PageData" resultType="PageData">
+        select  count(*) as count from tb_video where state=0 and course_id=#{course_id}
+        <if test="course_id!=null and course_id !=''">
+            and course_id = #{course_id}
+        </if>
+        <if test="video_name!=null and video_name !=''">
+            and video_name like concat('%', #{video_name},'%')
+        </if>
+    </select>
+
+
+
+
+
+    <!--根据id查课程-->
+    <select id="queryVideoById" parameterType="PageData" resultType="PageData">
+        select video_url,video_knowledge, video_name, date_format(add_time,"%Y-%m-%d %T") as add_time, browse_num,course_id,video_num,state
+        from tb_video
+        where id=#{id}
+    </select>
+
+    <!--更新视频状态 -->
+    <select id="updateVideoState" parameterType="PageData">
+        UPDATE tb_video SET state = #{state} WHERE  id=#{id}
+    </select>
+
+    <!--修改视频 -->
+    <select id="updateVideo" parameterType="PageData">
+        UPDATE tb_video SET state = #{state} WHERE  id=#{id}
+    </select>
+
+    <!-- 显示该视频所有的评论-->
+    <select id="showAllContentById" parameterType="PageData" resultType="PageData">
+      select nick_name,avatar_url,id,content,date_format(time,"%Y-%m-%d %T") as time,a.openid as openid,zan_num,reply_num
+     from tb_videocomment a join users b on a.openid=b.openid where  videoid=#{videoid} order by zan_num desc ;
+    </select>
+
+
+    <!--显示该视频的知识点 -->
+    <select id="showKnowledgeById" parameterType="PageData" resultType="PageData">
+      select video_knowledge
+     from tb_video where  id=#{videoid};
+    </select>
+
+    <!-- 显示当前视频下是否有当前用户点赞过的评论-->
+    <select id="showAlreadyZan"  parameterType="PageData" resultType="PageData">
+    select id from tb_zan where  openid=#{openid};
+    </select>
+
+
+    <select id="isZan"  parameterType="PageData" resultType="long">
+    select count(id) from tb_zan where  id=#{id} and openid=#{curropenid};
+    </select>
+    <select id="zan"  parameterType="PageData" resultType="PageData">
+    select openid from tb_zan where  id=#{id} and openid=#{openid};
+    </select>
+    <select id="zan7"  parameterType="PageData" resultType="PageData">
+    select openid from tb_zan where  id=#{replyid} and openid=#{openid};
+    </select>
+
+
+    <!--赞加一 -->
+    <select id="addzan1" parameterType="PageData">
+     UPDATE tb_videocomment SET zan_num = zan_num+1 WHERE  id=#{id};
+    </select>
+    <select id="addzan5" parameterType="PageData">
+     UPDATE tb_videoreply SET zan_num = zan_num+1 WHERE  replyid=#{replyid};
+    </select>
+
+
+    <!-- 减少赞-->
+    <select id="addzan3" parameterType="PageData">
+     UPDATE tb_videocomment SET zan_num = zan_num-1 WHERE  id=#{id};
+    </select>
+    <select id="addzan6" parameterType="PageData">
+     UPDATE tb_videoreply SET zan_num = zan_num-1 WHERE  replyid=#{replyid};
+    </select>
+
+    <!-- 加记录赞-->
+    <insert id="addzan2" parameterType="PageData">
+     insert into tb_zan(id,openid)
+     values (#{id},#{openid})
+    </insert>
+    <insert id="addzan8" parameterType="PageData">
+     insert into tb_zan(id,openid)
+     values (#{replyid},#{openid})
+    </insert>
+
+    <!-- 删除记录的赞-->
+    <insert id="addzan4" parameterType="PageData">
+     delete from tb_zan where  id=#{id} and openid=#{openid}
+    </insert>
+    <insert id="addzan9" parameterType="PageData">
+     delete from tb_zan where  id=#{replyid} and openid=#{openid}
+    </insert>
+
+
+
+    <!--增加视频评论 -->
+    <insert id="addVideoContent" parameterType="PageData">
+     insert into tb_videocomment(id,videoid,openid,content,time,zan_num,reply_num)
+     values (#{id},#{videoid},#{openid},#{content},#{time},0,0)
+    </insert>
+
+    <!--对视频的评论进行回复 -->
+    <insert id="addVideoContentReply" parameterType="PageData">
+     insert into tb_videoreply(replyid,commentid,openid,content,time,zan_num)
+     values (#{replyid},#{plid},#{openid},#{content},#{time},0)
+    </insert>
+<!-- 增加评论的回复数-->
+    <select id="addVideoContentReplyNum" parameterType="PageData">
+     UPDATE tb_videocomment SET reply_num = reply_num+1 WHERE  id=#{plid};
+    </select>
+
+    <!--显示该评论下的所有回复 -->
+    <select id="showAllContentReply" parameterType="PageData" resultType="PageData">
+     select nick_name,avatar_url,commentid,replyid,a.openid as openid,content,zan_num,date_format(time,"%Y-%m-%d %T") as time
+     from (select * from tb_videoreply where commentid=#{plid})as a left join users b on a.openid=b.openid  order by time asc
+    </select>
+
+    <!--删除指定评论下的  所有  回复-->
+    <insert id="deleteReplyById" parameterType="PageData">
+     delete from tb_videoreply where  commentid=#{plid}
+    </insert>
+    <!--删除指定评论-->
+    <insert id="deleteContentById" parameterType="PageData">
+     delete from tb_videocomment where id=#{id}
+    </insert>
+    <!-- 删除指定回复-->
+    <insert id="deleteOneReplyById" parameterType="PageData">
+     delete from tb_videoreply where replyid=#{replyid}
+    </insert>
+<!--删除回复后。评论数减1 -->
+    <select id="updateReplyNum" parameterType="PageData">
+     UPDATE tb_videocomment SET reply_num = reply_num-1 WHERE  id=#{id};
+    </select>
+
+<!--    以下5个 今日视频推荐 TodayRecommended-->
+    <select id="showTodayLatest" parameterType="PageData" resultType="PageData">
+        select  id,video_url,video_name,date_format(add_time,"%Y-%m-%d %T") as add_time,browse_num,video_num
+         from tb_video where state=0 order by add_time desc limit 0,1
+    </select>
+    <select id="showTodayTopNum" parameterType="PageData" resultType="PageData">
+        select  id,video_url,video_name,date_format(add_time,"%Y-%m-%d %T") as add_time,browse_num,video_num
+         from tb_video where state=0 order by browse_num desc limit 0,1
+    </select>
+    <select id="showTodayTopComment1" parameterType="PageData" resultType="PageData">
+        select videoid,COUNT(id) as commentnum from tb_videocomment  order by commentnum desc limit 0,1
+    </select>
+    <select id="showTodayTopComment2" parameterType="PageData" resultType="PageData">
+        select  id,video_url,video_name,date_format(add_time,"%Y-%m-%d %T") as add_time,browse_num,video_num
+        from tb_video where id=#{videoid}
+    </select>
+    <select id="showTodayRand" parameterType="PageData" resultType="PageData">
+        select  id,video_url,video_name,date_format(add_time,"%Y-%m-%d %T") as add_time,browse_num,video_num
+        from tb_video where state=0   order by rand() limit 1;
+    </select>
+
+</mapper>
